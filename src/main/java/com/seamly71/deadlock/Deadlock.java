@@ -1,5 +1,6 @@
 package com.seamly71.deadlock;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -21,10 +22,22 @@ public class Deadlock {
 
 
     public static void main(String[] args) {
+        Map<String, Thread> threadByDirection = new HashMap<>();
+
         for (String direction : lockByDirection.keySet()) {
-            new Thread(() -> crossIntersection(direction)).start();
+            threadByDirection.put(
+                    direction,
+                    new Thread(() -> crossIntersection(direction))
+                    );
         }
-        System.out.println("yay");
+
+        for (Thread thread: threadByDirection.values()) {
+            thread.start();
+        }
+
+        for (Thread thread: threadByDirection.values()) {
+            loopJoin(thread);
+        }
     }
 
     private static void crossIntersection(String direction) {
@@ -32,24 +45,24 @@ public class Deadlock {
         Lock tangentialLock = lockByDirection.get(blockingDirection);
 
         tangentialLock.lock();
-        System.out.println(String.format(
-                "Выехал на перекресток в направлении %s, блокирую %s", direction, blockingDirection
-        ));
+        System.out.printf(
+                "Выехал на перекресток в направлении %s, блокирую %s%n", direction, blockingDirection
+        );
 
         drive();
-        System.out.println(String.format(
-                "Хочу ехать в направлении %s", direction
-        ));
+        System.out.printf(
+                "Хочу ехать в направлении %s%n", direction
+        );
 
         Lock straightLock = lockByDirection.get(direction);
         straightLock.lock();
         tangentialLock.unlock();
-        System.out.println(String.format("Освободил %s", blockingDirection));
+        System.out.printf("Освободил %s%n", blockingDirection);
 
         straightLock.unlock();
-        System.out.println(String.format(
-                "Проехал перекресток в направлении %s", direction
-        ));
+        System.out.printf(
+                "Проехал перекресток в направлении %s%n", direction
+        );
     }
 
     private static void drive() {
@@ -63,4 +76,14 @@ public class Deadlock {
         }
     }
 
+    private static void loopJoin(Thread thread) {
+        while (true) {
+            try {
+                thread.join();
+            } catch (InterruptedException exception) {
+                continue;
+            }
+            break;
+        }
+    }
 }

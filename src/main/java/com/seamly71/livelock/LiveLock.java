@@ -8,51 +8,48 @@ public class LiveLock {
     public static void main(String[] args) {
         Lock juiceLock = new ReentrantLock();
         Lock cupLock = new ReentrantLock();
+        Thread aliceThread = new Thread(() -> getJuice(
+                juiceLock,
+                "графин с соком",
+                700,
+                cupLock,
+                "Алиса"
+        ));
+        Thread bobThread = new Thread(() -> getJuice(
+                cupLock,
+                "стаканы",
+                1300,
+                juiceLock,
+                "Боб"
+        ));
 
-        new Thread(() -> aliceGetJuice(juiceLock, cupLock)).start();
-        new Thread(() -> bobGetJuice(juiceLock, cupLock)).start();
+        aliceThread.start();
+        bobThread.start();
+        loopJoin(aliceThread);
+        loopJoin(bobThread);
     }
 
-    private static void aliceGetJuice(
-            Lock juiceLock,
-            Lock cupLock
+    private static void getJuice (
+            Lock firstItemLock,
+            String firstItemName,
+            int delay,
+            Lock secondItemLock,
+            String person
     ) {
         while (true) {
-            if (juiceLock.tryLock()) {
-                System.out.println("Алиса взяла графин с соком");
-                delay(700);
+            if (firstItemLock.tryLock()) {
+                System.out.printf("%s взял(а) %s.%n", person, firstItemName);
+                delay(delay);
 
-                if (cupLock.tryLock()) {
-                    System.out.println("Успех! Алиса налила себе сок");
-                    juiceLock.unlock();
-                    cupLock.unlock();
+                if (secondItemLock.tryLock()) {
+                    System.out.printf("Успех! %s налил(а) себе сок.%n", person);
+                    firstItemLock.unlock();
+                    secondItemLock.unlock();
                     return;
                 }
 
-                juiceLock.unlock();
-                System.out.println("Алиса вернула графин.");
-            }
-        }
-    }
-
-    private static void bobGetJuice(
-            Lock juiceLock,
-            Lock cupLock
-    ) {
-        while (true) {
-            if (cupLock.tryLock()) {
-                System.out.println("Боб взял стаканы");
-                delay(1300);
-
-                if (juiceLock.tryLock()) {
-                    System.out.println("Успех! Боб налил себе сок");
-                    juiceLock.unlock();
-                    cupLock.unlock();
-                    return;
-                }
-
-                cupLock.unlock();
-                System.out.println("Боб вернул стаканы.");
+                firstItemLock.unlock();
+                System.out.printf("%s вернул(а) %s.%n", person, firstItemName);
             }
         }
     }
@@ -61,6 +58,17 @@ public class LiveLock {
         while (true) {
             try {
                 Thread.sleep(mills);
+            } catch (InterruptedException exception) {
+                continue;
+            }
+            break;
+        }
+    }
+
+    private static void loopJoin(Thread thread) {
+        while (true) {
+            try {
+                thread.join();
             } catch (InterruptedException exception) {
                 continue;
             }
