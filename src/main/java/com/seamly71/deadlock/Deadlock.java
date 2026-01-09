@@ -28,14 +28,14 @@ public class Deadlock {
             threadByDirection.put(
                     direction,
                     new Thread(() -> crossIntersection(direction))
-                    );
+            );
         }
 
-        for (Thread thread: threadByDirection.values()) {
+        for (Thread thread : threadByDirection.values()) {
             thread.start();
         }
 
-        for (Thread thread: threadByDirection.values()) {
+        for (Thread thread : threadByDirection.values()) {
             loopJoin(thread);
         }
     }
@@ -46,7 +46,9 @@ public class Deadlock {
 
         tangentialLock.lock();
         System.out.printf(
-                "Выехал на перекресток в направлении %s, блокирую %s%n", direction, blockingDirection
+                "Выехал на перекресток в направлении %s, блокирую %s%n",
+                direction,
+                blockingDirection
         );
 
         drive();

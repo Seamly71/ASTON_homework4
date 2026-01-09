@@ -29,7 +29,7 @@ public class LiveLock {
         loopJoin(bobThread);
     }
 
-    private static void getJuice (
+    private static void getJuice(
             Lock firstItemLock,
             String firstItemName,
             int delay,
